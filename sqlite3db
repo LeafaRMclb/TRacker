@@ -1,0 +1,50 @@
+import sqlite3
+import datetime
+import time
+
+
+
+def sqldb():
+    start=input('start:')
+    stop=input('stop:')
+    elapsed=input('elapsed:')
+    units=input('units:')
+    task=input('task:')
+    db = sqlite3.connect('new.db')
+    cursor = db.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS data(Start TEXT, Stop TEXT, Elapsed INTEGER, Units INTEGER, Task TEXT)")
+    cursor.execute("INSERT INTO data(Start,Stop,Elapsed,Units,Task) VALUES (?,?,?,?,?)", (start,stop,elapsed,units,task))
+    print('updated')
+    db.commit()
+
+def retrieve():
+    db = sqlite3.connect('new.db')
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM data")
+    # t1 = cursor.fetchone()
+    # print(t1[0])
+    allrows= cursor.fetchall()
+    for row in allrows:
+        
+        print("{} : {}, {}, {}, {}".format(row[0],row[1],row[2],row[3],row[4]))
+
+def drop():
+    db = sqlite3.connect('new.db')
+    cursor = db.cursor()
+    cursor.execute("DROP TABLE data")
+    db.commit()
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+
+
