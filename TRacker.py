@@ -29,10 +29,7 @@ class Clock(QMainWindow):
         # credits1.move(210, 135)
 
         self.timer = QTimer(self)   
-        self.timer.timeout.connect(self.time_out)
-        
-        # self.le = QLineEdit(self)
-        # self.le.move(130, 22)
+        self.timer.timeout.connect(self.timeOut)        
 
         self.btn_start = QPushButton("Start", self)
         self.btn_start.clicked.connect(self.start)
@@ -44,10 +41,10 @@ class Clock(QMainWindow):
         self.btn_reset.clicked.connect(self.reset)
 
         self.btn_save = QPushButton("Save", self)
-        self.btn_save.clicked.connect(self.time_elapsed)
+        self.btn_save.clicked.connect(self.timeElapsed)
 
         self.btn_export = QPushButton("Export", self)
-        self.btn_export.clicked.connect(self.export_data)
+        self.btn_export.clicked.connect(self.exportData)
 
 
 
@@ -99,7 +96,7 @@ class Clock(QMainWindow):
         now = datetime.datetime.now()
         QMessageBox.information(self, 'Message', "Tracker started: %s" % (now.strftime("%Y-%m-%d %H:%M")))
         
-    def time_out(self):
+    def timeOut(self):
         global s, m, h
         
         if s < 59:
@@ -120,7 +117,7 @@ class Clock(QMainWindow):
         self.lcd.setDigitCount(len(self.time))
         self.lcd.display(self.time)
 
-    def time_elapsed(self):
+    def timeElapsed(self):
         now = datetime.datetime.now()
         QMessageBox.information(self, 'Message', "Tracker ended: "+ now.strftime("%Y-%m-%d %H:%M"))
         stop = time.time()
@@ -128,9 +125,9 @@ class Clock(QMainWindow):
         unit = minutes / 60
         QMessageBox.information(self, 'Message', "Time elapsed: %.2f minutes \n Units earned: %.2f " % (abs(minutes), abs(unit)))        
         # print(self.time, len(self.time))
-        return save_time(self.time)
+        return saveTime(self.time)
 
-    def export_data(self):
+    def exportData(self):
         #this will be written in one of the python modules which -
         #will handle the creation of an xls/xlsx/csv file e.g(xlwt,openpyxl,xlsxwriter)
         pass
@@ -153,11 +150,11 @@ class Clock(QMainWindow):
         else:
             self.getTaskName()
 
-def save_time(*args):
-    conn = sqlite3.connect("C://Leaf//project//database.db")
+def saveTime(*args):
+    conn = sqlite3.connect("database.db")
     conn.text_factory = str
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS data (time_elapsed VARCHAR(8))")
+    cursor.execute("CREATE TABLE IF NOT EXISTS data (timeElapsed VARCHAR(8))")
     cursor.execute("INSERT INTO data VALUES (?)", args)
     conn.commit()
     conn.close()
