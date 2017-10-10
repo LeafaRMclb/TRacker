@@ -46,6 +46,9 @@ class Clock(QMainWindow):
         self.btn_export = QPushButton("Export", self)
         self.btn_export.clicked.connect(self.exportData)
 
+        self.btn_retrieve = QPushButton("Retrieve", self)
+        self.btn_retrieve.clicked.connect(self.retrieve)
+
 
 
         grid = QGridLayout()
@@ -55,6 +58,7 @@ class Clock(QMainWindow):
         grid.addWidget(self.btn_reset, 1, 3)
         grid.addWidget(self.btn_save, 1, 2)
         grid.addWidget(self.btn_export, 4, 0)
+        grid.addWidget(self.btn_retrieve, 4, 1)
         grid.addWidget(self.lcd, 2, 0, 1, 4)
 
         centralwidget.setLayout(grid)
@@ -87,8 +91,11 @@ class Clock(QMainWindow):
     def start(self):
         global s, m, h
         global start
-        global taskName
+        global now
+        global hms
         
+        # global taskName
+        hms = time.strftime("%H:%M:%S")
         start = time.time()
         self.timer.start(1000)        
         self.getTaskName()
@@ -118,11 +125,19 @@ class Clock(QMainWindow):
         self.lcd.display(self.time)
 
     def timeElapsed(self):
-        now = datetime.datetime.now()
-        QMessageBox.information(self, 'Message', "Tracker ended: "+ now.strftime("%Y-%m-%d %H:%M"))
+        global stop
+        global minutes
+        global unit
+        global stophms
+
+        stophms = time.strftime("%H:%M:%S")
+        dateNow = datetime.datetime.now()
+        QMessageBox.information(self, 'Message', "Tracker ended: "+ dateNow.strftime("%Y-%m-%d %H:%M"))
         stop = time.time()
-        minutes = (start - stop) / 60                 
+        minutes = (start - stop) / 60
+        minutes = abs(minutes)                 
         unit = minutes / 60
+        unit = abs(unit)
         QMessageBox.information(self, 'Message', "Time elapsed: %.2f minutes \n Units earned: %.2f " % (abs(minutes), abs(unit)))        
         # print(self.time, len(self.time))
         return saveTime(self.time)
@@ -131,6 +146,19 @@ class Clock(QMainWindow):
         #this will be written in one of the python modules which -
         #will handle the creation of an xls/xlsx/csv file e.g(xlwt,openpyxl,xlsxwriter)
         pass
+    
+    def retrieve(self):
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM data")
+        # t1 = cursor.fetchone()
+        # print(t1[0])
+        allRows= cursor.fetchall()
+        for row in allRows:
+            print("{}, {}, {}, {}, {}, {}".format(row[0],row[1],row[2],row[3],row[4], row[5]))
+            
+            
+        
 
     def closeEvent(self, event):
         
@@ -144,20 +172,31 @@ class Clock(QMainWindow):
             event.ignore()
 
     def getTaskName(self):
-        text, okPressed = QInputDialog.getText(self, "Message","Task name:", QLineEdit.Normal, "")
-        if okPressed and text != '':
-            QMessageBox.information(self, 'Message', "Task name: %s" % text)
+        global taskName
+
+        taskName, okPressed = QInputDialog.getText(self, "Message","Task name:", QLineEdit.Normal, "")
+        if okPressed and taskName != '':
+            QMessageBox.information(self, 'Message', "Task name: %s" % taskName)
         else:
             self.getTaskName()
+
+    # def drop(self):
+    #     conn = sqlite3.connect("database.db")
+    #     cursor = conn.cursor()
+    #     cursor.execute("DROP TABLE data")
+    #     conn.commit()
+        
 
 def saveTime(*args):
     conn = sqlite3.connect("database.db")
     conn.text_factory = str
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS data (timeElapsed VARCHAR(8))")
-    cursor.execute("INSERT INTO data VALUES (?)", args)
+    cursor.execute("CREATE TABLE IF NOT EXISTS data (Calendar TEXT, Start TEXT, Stop TEXT, Elapsed INTEGER, Units INTEGER, Task TEXT)")
+    # cursor.execute("INSERT INTO data VALUES (?)", args)
+    cursor.execute("INSERT INTO data(Calendar,Start,Stop,Elapsed,Units,Task) VALUES (?,?,?,?,?,?)", (now, hms, stophms, minutes, unit, taskName))
     conn.commit()
     conn.close()
+
 
 
 if __name__ == "__main__":
