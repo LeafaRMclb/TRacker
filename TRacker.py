@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import sqlite3
 import time
 import datetime
+from pandas import read_sql
 
 
 s = 0
@@ -46,8 +47,8 @@ class Clock(QMainWindow):
         self.btn_export = QPushButton("Export", self)
         self.btn_export.clicked.connect(self.exportData)
 
-        self.btn_retrieve = QPushButton("Retrieve", self)
-        self.btn_retrieve.clicked.connect(self.retrieve)
+        # self.btn_retrieve = QPushButton("Retrieve", self)
+        # self.btn_retrieve.clicked.connect(self.retrieve)
 
 
 
@@ -58,7 +59,7 @@ class Clock(QMainWindow):
         grid.addWidget(self.btn_reset, 1, 3)
         grid.addWidget(self.btn_save, 1, 2)
         grid.addWidget(self.btn_export, 4, 0)
-        grid.addWidget(self.btn_retrieve, 4, 1)
+        # grid.addWidget(self.btn_retrieve, 4, 1)
         grid.addWidget(self.lcd, 2, 0, 1, 4)
 
         centralwidget.setLayout(grid)
@@ -93,14 +94,16 @@ class Clock(QMainWindow):
         global start
         global now
         global hms
+        global dateNow
         
         # global taskName
-        hms = time.strftime("%H:%M:%S")
+        hms = time.strftime("%H:%M")
         start = time.time()
         self.timer.start(1000)        
         self.getTaskName()
         
         now = datetime.datetime.now()
+        dateNow = now.strftime("%Y-%m-%d")
         QMessageBox.information(self, 'Message', "Tracker started: %s" % (now.strftime("%Y-%m-%d %H:%M")))
         
     def timeOut(self):
@@ -130,32 +133,36 @@ class Clock(QMainWindow):
         global unit
         global stophms
 
-        stophms = time.strftime("%H:%M:%S")
+        stophms = time.strftime("%H:%M")
         dateNow = datetime.datetime.now()
         QMessageBox.information(self, 'Message', "Tracker ended: "+ dateNow.strftime("%Y-%m-%d %H:%M"))
         stop = time.time()
         minutes = (start - stop) / 60
-        minutes = abs(minutes)                 
+        minutes = ("%.2f" % minutes)
+        minutes = abs(float(minutes))                 
         unit = minutes / 60
-        unit = abs(unit)
+        unit = ("%.2f" % unit)
+        unit = abs(float(unit))
         QMessageBox.information(self, 'Message', "Time elapsed: %.2f minutes \n Units earned: %.2f " % (abs(minutes), abs(unit)))        
         # print(self.time, len(self.time))
         return saveTime(self.time)
 
     def exportData(self):
-        #this will be written in one of the python modules which -
-        #will handle the creation of an xls/xlsx/csv file e.g(xlwt,openpyxl,xlsxwriter)
-        pass
+        con = sqlite3.connect('database.db')
+        table = read_sql('SELECT * FROM data', con)
+        table.to_csv('output.csv')
+        QMessageBox.information(self, 'Message','Output created on directory!')
+
     
-    def retrieve(self):
-        conn = sqlite3.connect("database.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM data")
-        # t1 = cursor.fetchone()
-        # print(t1[0])
-        allRows= cursor.fetchall()
-        for row in allRows:
-            print("{}, {}, {}, {}, {}, {}".format(row[0],row[1],row[2],row[3],row[4], row[5]))
+    # def retrieve(self):
+    #     conn = sqlite3.connect("database.db")
+    #     cursor = conn.cursor()
+    #     cursor.execute("SELECT * FROM data")
+    #     # t1 = cursor.fetchone()
+    #     # print(t1[0])
+    #     allRows= cursor.fetchall()
+    #     for row in allRows:
+    #         print("{}, {}, {}, {}, {}, {}".format(row[0],row[1],row[2],row[3],row[4], row[5]))
             
             
         
@@ -193,7 +200,7 @@ def saveTime(*args):
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS data (Calendar TEXT, Start TEXT, Stop TEXT, Elapsed INTEGER, Units INTEGER, Task TEXT)")
     # cursor.execute("INSERT INTO data VALUES (?)", args)
-    cursor.execute("INSERT INTO data(Calendar,Start,Stop,Elapsed,Units,Task) VALUES (?,?,?,?,?,?)", (now, hms, stophms, minutes, unit, taskName))
+    cursor.execute("INSERT INTO data(Calendar,Start,Stop,Elapsed,Units,Task) VALUES (?,?,?,?,?,?)", (dateNow, hms, stophms, minutes, unit, taskName))
     conn.commit()
     conn.close()
 
