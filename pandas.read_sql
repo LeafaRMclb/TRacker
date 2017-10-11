@@ -1,0 +1,5 @@
+import sqlite3
+from pandas import read_sql
+conn = sqlite3.connect('C://Leaf//project//database.db')
+table = read_sql('SELECT * FROM data', conn)
+table.to_csv('output.csv')
