@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import sqlite3
 import time
 import datetime
+import image_qr
 from pandas import read_sql
 
 
@@ -19,16 +20,14 @@ class Clock(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("TRacker")
-        self.setWindowIcon(QIcon("gnome_panel_clock.png"))
+        self.setWindowIcon(QIcon(":/logo_tracker.png"))
         self.resize(280, 170)
 
         centralwidget = QWidget(self)
 
         self.lcd = QLCDNumber(self)
 
-        # credits1 = QLabel("Economics Manila", self)
-        # credits1.move(210, 135)
-
+        
         self.timer = QTimer(self)   
         self.timer.timeout.connect(self.timeOut)        
 
@@ -47,11 +46,7 @@ class Clock(QMainWindow):
         self.btn_export = QPushButton("Export", self)
         self.btn_export.clicked.connect(self.exportData)
 
-        # self.btn_retrieve = QPushButton("Retrieve", self)
-        # self.btn_retrieve.clicked.connect(self.retrieve)
-
-
-
+        
         grid = QGridLayout()
 
         grid.addWidget(self.btn_start, 1, 0)
@@ -59,8 +54,8 @@ class Clock(QMainWindow):
         grid.addWidget(self.btn_reset, 1, 3)
         grid.addWidget(self.btn_save, 1, 2)
         grid.addWidget(self.btn_export, 4, 0)
-        # grid.addWidget(self.btn_retrieve, 4, 1)
         grid.addWidget(self.lcd, 2, 0, 1, 4)
+        
 
         centralwidget.setLayout(grid)
 
@@ -96,7 +91,7 @@ class Clock(QMainWindow):
         global hms
         global dateNow
         
-        # global taskName
+        
         hms = time.strftime("%H:%M")
         start = time.time()
         self.timer.start(1000)        
@@ -143,29 +138,16 @@ class Clock(QMainWindow):
         unit = minutes / 60
         unit = ("%.2f" % unit)
         unit = abs(float(unit))
-        QMessageBox.information(self, 'Message', "Time elapsed: %.2f minutes \n Units earned: %.2f " % (abs(minutes), abs(unit)))        
-        # print(self.time, len(self.time))
+        QMessageBox.information(self, 'Message', "Time elapsed: %.2f minutes \n Units earned: %.2f " % (abs(minutes), abs(unit)))                
         return saveTime(self.time)
 
     def exportData(self):
         con = sqlite3.connect('database.db')
         table = read_sql('SELECT * FROM data', con)
-        table.to_csv('output.csv')
+        table.to_csv('output.csv', index=False)
         QMessageBox.information(self, 'Message','Output created on directory!')
 
-    
-    # def retrieve(self):
-    #     conn = sqlite3.connect("database.db")
-    #     cursor = conn.cursor()
-    #     cursor.execute("SELECT * FROM data")
-    #     # t1 = cursor.fetchone()
-    #     # print(t1[0])
-    #     allRows= cursor.fetchall()
-    #     for row in allRows:
-    #         print("{}, {}, {}, {}, {}, {}".format(row[0],row[1],row[2],row[3],row[4], row[5]))
-            
-            
-        
+         
 
     def closeEvent(self, event):
         
@@ -187,11 +169,7 @@ class Clock(QMainWindow):
         else:
             self.getTaskName()
 
-    # def drop(self):
-    #     conn = sqlite3.connect("database.db")
-    #     cursor = conn.cursor()
-    #     cursor.execute("DROP TABLE data")
-    #     conn.commit()
+    
         
 
 def saveTime(*args):
@@ -199,7 +177,6 @@ def saveTime(*args):
     conn.text_factory = str
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS data (Calendar TEXT, Start TEXT, Stop TEXT, Elapsed INTEGER, Units INTEGER, Task TEXT)")
-    # cursor.execute("INSERT INTO data VALUES (?)", args)
     cursor.execute("INSERT INTO data(Calendar,Start,Stop,Elapsed,Units,Task) VALUES (?,?,?,?,?,?)", (dateNow, hms, stophms, minutes, unit, taskName))
     conn.commit()
     conn.close()
